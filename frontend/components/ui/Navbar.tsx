@@ -56,7 +56,7 @@ export function Navbar() {
         {/* Status */}
         <div className="flex items-center gap-2 shrink-0 text-xs" style={{ color: 'var(--text-muted)' }}>
           <span className="live-dot" />
-          <span className="hidden sm:block">MOCK MODE</span>
+          <span className="hidden sm:block">LIVE</span>
         </div>
       </div>
     </nav>

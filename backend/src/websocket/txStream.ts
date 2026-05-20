@@ -1,6 +1,19 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
-import { generateLiveTx } from '../services/mockEthers';
+import { subscribeNewBlocks } from '../services/ethers';
+import { incrementTxsSeen, incrementSuspicious, setCurrentBlock } from '../services/stats';
+
+// Sliding-window dedup: cap at 1000 hashes to prevent memory growth
+const seenHashes = new Set<string>();
+const seenQueue: string[] = [];
+
+function isDuplicate(hash: string): boolean {
+  if (seenHashes.has(hash)) return true;
+  seenHashes.add(hash);
+  seenQueue.push(hash);
+  if (seenQueue.length > 1000) seenHashes.delete(seenQueue.shift()!);
+  return false;
+}
 
 interface ExtWebSocket extends WebSocket {
   isAlive: boolean;
@@ -50,22 +63,20 @@ export function initWebSocketServer(server: Server) {
 
   wss.on('close', () => clearInterval(heartbeat));
 
-  // Broadcast new transactions every 2–4 seconds
-  function broadcastNextTx() {
-    const delay = 2000 + Math.random() * 2000;
-    setTimeout(() => {
-      if (wss.clients.size > 0) {
-        const tx = generateLiveTx();
-        const payload = JSON.stringify({ type: 'transaction', data: tx });
-        wss.clients.forEach((ws) => {
-          if (ws.readyState === WebSocket.OPEN) ws.send(payload);
-        });
-      }
-      broadcastNextTx();
-    }, delay);
-  }
-
-  broadcastNextTx();
+  // Stream real Ethereum transactions from each new block
+  subscribeNewBlocks(
+    (tx) => {
+      if (isDuplicate(tx.hash)) return;
+      incrementTxsSeen();
+      if (tx.isSuspicious) incrementSuspicious();
+      setCurrentBlock(tx.blockNumber);
+      const payload = JSON.stringify({ type: 'transaction', data: tx });
+      wss.clients.forEach((ws) => {
+        if (ws.readyState === WebSocket.OPEN) ws.send(payload);
+      });
+    },
+    () => wss.clients.size > 0,
+  );
 
   console.log('[WS] WebSocket server initialized on /ws');
   return wss;

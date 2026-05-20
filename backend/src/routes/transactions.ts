@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { getMockTransactions } from '../services/mockEthers';
+import { getTransactions } from '../services/ethers';
 import { cacheGet, cacheSet } from '../services/redis';
 import { isAddress } from 'ethers';
 
@@ -23,13 +23,13 @@ router.get('/:address', async (req: Request, res: Response) => {
       return res.json({ ...JSON.parse(cached), _meta: { source: 'cache', latencyMs: Date.now() - start } });
     }
 
-    const transactions = getMockTransactions(address, page, limit);
+    const transactions = await getTransactions(address, page, limit);
     const response = {
       address,
       page,
       limit,
       transactions,
-      hasMore: page * limit < 5000,
+      hasMore: transactions.length === limit,
     };
 
     await cacheSet(cacheKey, JSON.stringify(response), 30);

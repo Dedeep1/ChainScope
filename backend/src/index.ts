@@ -5,6 +5,7 @@ import http from 'http';
 import walletRouter from './routes/wallet';
 import transactionsRouter from './routes/transactions';
 import searchRouter from './routes/search';
+import statsRouter from './routes/stats';
 import { initWebSocketServer } from './websocket/txStream';
 
 const app = express();
@@ -28,6 +29,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/wallet', walletRouter);
 app.use('/api/transactions', transactionsRouter);
 app.use('/api/search', searchRouter);
+app.use('/api/stats', statsRouter);
 
 // 404
 app.use((_req, res) => {

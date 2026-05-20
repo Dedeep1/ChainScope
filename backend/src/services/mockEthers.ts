@@ -118,12 +118,14 @@ export function getMockTransactions(address: string, page = 1, limit = 20): Tran
     const isSuspicious = r(0) < 0.12;
     const chains = ['Ethereum', 'Base', 'Arbitrum'];
 
+    const isOutgoing = r(2) > 0.5;
+    const counterparty = `0x${(seed + i + 1).toString(16).padStart(40, '0')}`;
     txs.push({
       hash: `0x${Array.from({ length: 64 }, (_, k) => Math.floor(seededRand(seed, i * 1000 + k) * 16).toString(16)).join('')}`,
       blockNumber: 20000000 - i * 3,
       timestamp: new Date(Date.now() - i * 180000 - Math.floor(r(1) * 120000)).toISOString(),
-      from: r(2) > 0.5 ? address : `0x${seed.toString(16).padStart(40, '0')}`,
-      to: r(3) > 0.5 ? address : `0x${(seed + i).toString(16).padStart(40, '0')}`,
+      from: isOutgoing ? address : counterparty,
+      to: isOutgoing ? counterparty : address,
       valueETH: r(4) * 10,
       valueUSD: r(5) * 20000,
       gasUsed: Math.floor(r(6) * 200000) + 21000,
@@ -150,14 +152,17 @@ export function generateLiveTx(): Transaction & { id: string } {
   const seed = Date.now();
   const r = (i: number) => seededRand(seed, i);
   const isSuspicious = r(0) < 0.15;
+  const fromIdx = Math.floor(r(2) * addresses.length);
+  let toIdx = Math.floor(r(3) * (addresses.length - 1));
+  if (toIdx >= fromIdx) toIdx++;
 
   return {
     id: `live-${seed}`,
     hash: `0x${Array.from({ length: 64 }, (_, k) => Math.floor(seededRand(seed, k + 50) * 16).toString(16)).join('')}`,
     blockNumber: 20500000 + Math.floor(r(1) * 1000),
     timestamp: new Date().toISOString(),
-    from: addresses[Math.floor(r(2) * addresses.length)],
-    to: addresses[Math.floor(r(3) * addresses.length)],
+    from: addresses[fromIdx],
+    to: addresses[toIdx],
     valueETH: r(4) * 5,
     valueUSD: r(5) * 10000,
     gasUsed: Math.floor(r(6) * 150000) + 21000,

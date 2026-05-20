@@ -1,13 +1,7 @@
 import { Navbar } from '@/components/ui/Navbar';
 import { WalletSearch } from '@/components/WalletSearch';
 import { TransactionFeed } from '@/components/TransactionFeed';
-
-const STATS = [
-  { label: 'Wallets Analyzed', value: '142K+', icon: '👛', color: '#3b82f6' },
-  { label: 'Suspicious Txs Flagged', value: '18.4K', icon: '⚠', color: '#f59e0b' },
-  { label: 'Avg Latency', value: '<250ms', icon: '⚡', color: '#10b981' },
-  { label: 'Chains Covered', value: '3', icon: '⛓', color: '#8b5cf6' },
-];
+import { StatsCards } from '@/components/StatsCards';
 
 export default function HomePage() {
   return (
@@ -40,15 +34,7 @@ export default function HomePage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-          {STATS.map((s, i) => (
-            <div key={i} className="glass-card p-4 text-center animate-fade-in" style={{ animationDelay: `${i * 80}ms` }}>
-              <div className="text-2xl mb-1">{s.icon}</div>
-              <div className="text-xl font-black" style={{ color: s.color }}>{s.value}</div>
-              <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
+        <StatsCards />
 
         {/* Live feed */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

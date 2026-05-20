@@ -5,6 +5,7 @@ import {
   getMockDefiExposure,
   getMockChainBreakdown,
 } from './mockEthers';
+import { getWalletInfo } from './ethers';
 
 function scoreToLevel(score: number): RiskLevel {
   if (score >= 75) return 'critical';
@@ -120,8 +121,8 @@ function computeRiskScore(address: string): { score: number; flags: RiskFlag[] }
   return { score: Math.min(100, score), flags };
 }
 
-export function buildWalletProfile(address: string): WalletProfile {
-  const { txCount, totalValueUSD, firstSeenDate } = getMockWalletData(address);
+export async function buildWalletProfile(address: string): Promise<WalletProfile> {
+  const { txCount: mockTxCount, totalValueUSD: mockValueUSD, firstSeenDate } = getMockWalletData(address);
   const { score, flags } = computeRiskScore(address);
   const tokens = getMockTokenHoldings(address);
   const defi = getMockDefiExposure(address);
@@ -129,15 +130,22 @@ export function buildWalletProfile(address: string): WalletProfile {
 
   const lastActiveOffset = Math.floor(Math.abs(Math.sin(addrSeed(address)) * 7 * 86400000));
 
-  // Simple ENS mock for well-known addresses
-  const ENS_MAP: Record<string, string> = {
-    '0xd8da6bf26964af9d7eed9e03e53415d37aa96045': 'vitalik.eth',
-    '0x220866b1a2219f40e72f5c628b65d54268ca3a9d': 'hayden.eth',
-  };
+  let txCount = mockTxCount;
+  let totalValueUSD = mockValueUSD;
+  let ens: string | undefined;
+
+  try {
+    const real = await getWalletInfo(address);
+    if (real.txCount > 0) txCount = real.txCount;
+    if (real.balanceUSD > 0) totalValueUSD = real.balanceUSD;
+    ens = real.ensName ?? undefined;
+  } catch {
+    // fall back to mock values
+  }
 
   return {
     address,
-    ens: ENS_MAP[address.toLowerCase()],
+    ens,
     firstSeen: firstSeenDate.toISOString(),
     lastActive: new Date(Date.now() - lastActiveOffset).toISOString(),
     txCount,

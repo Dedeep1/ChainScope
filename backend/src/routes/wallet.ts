@@ -3,6 +3,7 @@ import { buildWalletProfile } from '../services/riskEngine';
 import { cacheGet, cacheSet } from '../services/redis';
 import { saveWalletProfile, logSearch } from '../services/db';
 import { isAddress } from 'ethers';
+import { incrementWallets } from '../services/stats';
 
 const router = Router();
 
@@ -24,8 +25,8 @@ router.get('/:address', async (req: Request, res: Response) => {
       return res.json({ ...data, _meta: { source: 'cache', latencyMs: Date.now() - start } });
     }
 
-    // Build profile
-    const profile = buildWalletProfile(address);
+    incrementWallets();
+    const profile = await buildWalletProfile(address);
 
     // Persist & cache
     await Promise.all([
