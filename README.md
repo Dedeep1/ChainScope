@@ -6,12 +6,6 @@ Built this because most block explorers just show you data — they don't tell y
 
 ---
 
-## Demo
-
-> Add screenshot here
-
----
-
 ## Features
 
 - **Live transaction feed** — WebSocket connection streams real Ethereum transactions as blocks land, filtered to non-zero ETH transfers
